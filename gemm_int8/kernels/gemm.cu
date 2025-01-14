@@ -19,51 +19,11 @@
 #include <cutlass/util/host_tensor.h>
 
 
-torch::Tensor int8MatmulQuikCUDA(const torch::Tensor &A, const torch::Tensor &B) {
-    torch::checkAllSameGPU("int8Matmul", {{A, "A", 0}, {B, "B", 1}});
-  auto M = A.size(0);
-  auto N = B.size(0);
-  auto K = A.size(1);  // 4bit packing is on the columns
-  auto C = torch::empty({M, N}, torch::dtype(torch::kInt32).device(A.device()));
-
-  using Gemm = cutlass::gemm::device::Gemm<
-      int8_t,                          // ElementA
-      cutlass::layout::RowMajor,       // LayoutA
-      int8_t,                          // ElementB
-      cutlass::layout::ColumnMajor,    // LayoutB
-      int32_t,                         // ElementOutput
-      cutlass::layout::RowMajor,       // LayoutOutput
-      int32_t,                         // ElementAccumulator
-      cutlass::arch::OpClassTensorOp,  // tag indicating Tensor Cores
-      cutlass::arch::Sm80  // tag indicating target GPU compute architecture
-      >;
-
-  Gemm gemmOp;
-
-  using GemmCoord = cutlass::gemm::GemmCoord;
-
-  typename Gemm::Arguments arguments{
-      {static_cast<GemmCoord::Index>(M), static_cast<GemmCoord::Index>(N),
-       static_cast<GemmCoord::Index>(K)},
-      {A.data_ptr<int8_t>(), K},
-      {B.data_ptr<int8_t>(), K},
-      {C.data_ptr<int32_t>(), N},
-      {C.data_ptr<int32_t>(), N},
-      {2.0, 0}};
-
-  auto status = gemmOp(arguments);
-
-  TORCH_CHECK(status == cutlass::Status::kSuccess,
-              cutlassGetStatusString(status))
-
-  return C;
-}
-
 template <typename TileShape, typename WarpShape, int kStages>
-torch::Tensor int8_matmul_v1(
+torch::Tensor int8_matmul(
                                   torch::Tensor input,  // INT8
                                   torch::Tensor weight, // INT8
-                                  torch::Tensor out,   // INT32
+                                  torch::Tensor out,   // BF16
                                   float alpha          // FP32
 ){
   auto M = input.size(0);
@@ -163,10 +123,10 @@ torch::Tensor int8_matmul_v1(
   return out;
 }
 
-torch::Tensor int8_matmul_host_v1(
+torch::Tensor int8_matmul_host(
                                   torch::Tensor input,  // INT8
                                   torch::Tensor weight, // INT8
-                                  torch::Tensor out,   // INT32
+                                  torch::Tensor out,   // BF16
                                   float alpha          // FP32
 ){
   auto M = input.size(0);
@@ -177,26 +137,26 @@ torch::Tensor int8_matmul_host_v1(
     using TileShape = typename cutlass::gemm::GemmShape<128, 128, 128>;
     using WarpShape = typename cutlass::gemm::GemmShape<64, 64, 128>;
     static const int kStages = 3;
-    return int8_matmul_v1<TileShape, WarpShape, kStages>(input, weight, out, alpha);
+    return int8_matmul<TileShape, WarpShape, kStages>(input, weight, out, alpha);
   } else if (M==512 && N==4096 && K==14336){
     using TileShape = typename cutlass::gemm::GemmShape<128, 128, 64>;
     using WarpShape = typename cutlass::gemm::GemmShape<64, 64, 64>;
     static const int kStages = 4;
-    return int8_matmul_v1<TileShape, WarpShape, kStages>(input, weight, out, alpha);
+    return int8_matmul<TileShape, WarpShape, kStages>(input, weight, out, alpha);
   } else if (K==4096 && N==4096){
     using TileShape = typename cutlass::gemm::GemmShape<256, 128, 64>;
     using WarpShape = typename cutlass::gemm::GemmShape<64, 64, 64>;
     static const int kStages = 3;
-    return int8_matmul_v1<TileShape, WarpShape, kStages>(input, weight, out, alpha);
+    return int8_matmul<TileShape, WarpShape, kStages>(input, weight, out, alpha);
   } else if (M==1024 && N==14336 && K==4096){
     using TileShape = typename cutlass::gemm::GemmShape<128, 128, 64>;
     using WarpShape = typename cutlass::gemm::GemmShape<64, 64, 64>;
     static const int kStages = 3;
-    return int8_matmul_v1<TileShape, WarpShape, kStages>(input, weight, out, alpha);
+    return int8_matmul<TileShape, WarpShape, kStages>(input, weight, out, alpha);
   } else {
     using TileShape = typename cutlass::gemm::GemmShape<256, 128, 64>;
     using WarpShape = typename cutlass::gemm::GemmShape<64, 64, 64>;
     static const int kStages = 3;
-    return int8_matmul_v1<TileShape, WarpShape, kStages>(input, weight, out, alpha);
+    return int8_matmul<TileShape, WarpShape, kStages>(input, weight, out, alpha);
   }
 }

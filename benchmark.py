@@ -1,5 +1,5 @@
 import torch
-import int8_ada
+import gemm_int8
 import time
 import numpy as np
 import matplotlib
@@ -64,7 +64,6 @@ tokens = [512, 1024, 2048]
 x_labels = []
 bf16_runtimes = []
 int8_runtimes = []
-int8_quik_runtimes = []
 
 for token in tokens:
     print('------------------')
@@ -76,14 +75,11 @@ for token in tokens:
         a_int8, b_int8 = make_rand_tensors(torch.int8, token, n, k)
 
         bf16_times, bf16_times_std = bench_fn(torch.matmul, a, b.t())
-        v_1_times, v_1_times_std = bench_fn(int8_ada.int8_matmul_v1, a_int8, b_int8, 1.0)
-        quik_times, quik_times_std = bench_fn(int8_ada.int8_matmul_quik, a_int8, b_int8)
+        v_1_times, v_1_times_std = bench_fn(gemm_int8.matmul, a_int8, b_int8, 1.0)
 
-        print(f'Speedup (V1): {bf16_times/v_1_times:.2f}x')
-        #print(f'Speedup (Quik): {bf16_times/quik_times:.2f}x')
+        print(f'Speedup: {bf16_times/v_1_times:.2f}x')
 
         int8_runtimes.append(v_1_times.item())
-        int8_quik_runtimes.append(quik_times.item())
         bf16_runtimes.append(bf16_times.item())
 
 print(bf16_runtimes)
@@ -118,4 +114,4 @@ plt.legend()
 plt.yticks(np.arange(1, 4.1, 0.25))
 
 plt.tight_layout()
-plt.savefig("int8_bf16_benchmark.png")
+plt.savefig("benchmark_int8.png")

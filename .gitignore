@@ -19,3 +19,4 @@ int8_ada.egg-info/
 *.PKG-INFO
 __pycache__/
 CMakeCache*
+gemm_int8.egg-info/

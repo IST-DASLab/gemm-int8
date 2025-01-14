@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(int8_ada LANGUAGES CXX)
+project(gemm_int8 LANGUAGES CXX)
 
 
 find_package(Git REQUIRED)
@@ -23,7 +23,7 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 include_directories("${CMAKE_SOURCE_DIR}")
 include_directories(cutlass/tools/util/include)
 include_directories(cutlass/include)
-include_directories(int8_ada/kernels/include)
+include_directories(gemm_int8/kernels/include)
 
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})

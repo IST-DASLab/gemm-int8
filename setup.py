@@ -22,7 +22,7 @@ def remove_unwanted_pytorch_nvcc_flags():
 def get_cuda_arch_flags():
     return [
         # '-gencode', 'arch=compute_75,code=sm_75',  # Turing
-        # '-gencode', 'arch=compute_80,code=sm_80',  # Ampere
+        '-gencode', 'arch=compute_80,code=sm_80',  # Ampere
         # '-gencode', 'arch=compute_86,code=sm_86',  # Ampere
         '-gencode', 'arch=compute_89,code=sm_89',  # Ada
         '--expt-relaxed-constexpr'
@@ -51,16 +51,16 @@ if __name__ == '__main__':
     third_party_cmake()
     remove_unwanted_pytorch_nvcc_flags()
     setup(
-        name='int8_ada',
+        name='gemm_int8',
         ext_modules=[
             CUDAExtension(
-                name='int8_ada._CUDA',
+                name='gemm_int8._CUDA',
                 sources=[
-                    'int8_ada/kernels/bindings.cpp',
-                    'int8_ada/kernels/gemm.cu',
+                    'gemm_int8/kernels/bindings.cpp',
+                    'gemm_int8/kernels/gemm.cu',
                 ],
                 include_dirs=[
-                    os.path.join(setup_dir, 'int8_ada/kernels/include'),
+                    os.path.join(setup_dir, 'gemm_int8/kernels/include'),
                     os.path.join(setup_dir, 'cutlass/include'),
                     os.path.join(setup_dir, 'cutlass/tools/util/include')
                 ],
