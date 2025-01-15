@@ -1,11 +1,6 @@
 import torch
 import gemm_int8._CUDA
 
-__all__ =  [ 
-           "matmul"
-           ]
-def int8_matmul_quik(x: torch.Tensor, y: torch.Tensor):
-    return gemm_int8._CUDA.int8_matmul_quik(x, y)
 
 def matmul(x: torch.Tensor,
            y: torch.Tensor,
@@ -20,3 +15,6 @@ def matmul(x: torch.Tensor,
         fastAcc: bool, (default=True)
     '''
     return gemm_int8._CUDA.int8_matmul(x, y, alpha)
+
+
+__all__ =  ["matmul"]
