@@ -20,3 +20,6 @@ int8_ada.egg-info/
 __pycache__/
 CMakeCache*
 gemm_int8.egg-info/
+build/*
+dist/*
+*.cmake
