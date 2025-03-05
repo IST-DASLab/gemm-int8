@@ -11,6 +11,9 @@ import torch
 setup_dir = os.path.dirname(os.path.realpath(__file__))
 HERE = pathlib.Path(__file__).absolute().parent
 
+# Read README for the long description
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
 def remove_unwanted_pytorch_nvcc_flags():
     REMOVE_NVCC_FLAGS = [
@@ -38,7 +41,6 @@ def get_cuda_arch_flags():
 
 
 def third_party_cmake():
-
     cmake = shutil.which("cmake")
     if cmake is None:
         raise RuntimeError("Cannot find CMake executable.")
@@ -61,19 +63,36 @@ def third_party_cmake():
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    assert torch.cuda.is_available(), "CUDA is not available!"
-    device = torch.cuda.current_device()
-    print(f"Current device: {torch.cuda.get_device_name(device)}")
-    print(f"Current CUDA capability: {torch.cuda.get_device_capability(device)}")
-    assert torch.cuda.get_device_capability(device)[0] >= 8, (
-        f"CUDA capability must be >= 8.0, yours is {torch.cuda.get_device_capability(device)}"
-    )
+class CustomBuildExtension(BuildExtension):
+    """Custom build extension that verifies CUDA compatibility before building."""
+    
+    def run(self):
+        assert torch.cuda.is_available(), "CUDA is not available!"
+        device = torch.cuda.current_device()
+        print(f"Current device: {torch.cuda.get_device_name(device)}")
+        print(f"Current CUDA capability: {torch.cuda.get_device_capability(device)}")
+        assert torch.cuda.get_device_capability(device)[0] >= 8, (
+            f"CUDA capability must be >= 8.0, yours is {torch.cuda.get_device_capability(device)}"
+        )
+        third_party_cmake()
+        remove_unwanted_pytorch_nvcc_flags()
+        super().run()
 
-    third_party_cmake()
-    remove_unwanted_pytorch_nvcc_flags()
+
+if __name__ == "__main__":
     setup(
         name="gemm_int8",
+        version="1.0.0",
+        author="Rush Tabesh",
+        author_email="soroushtabesh@gmail.com",
+        description="High-performance INT8 matrix multiplication CUDA extension for PyTorch",
+        long_description=long_description,
+        long_description_content_type="text/markdown",
+        url="https://github.com/IST-DASLab/gemm-int8",
+        project_urls={
+            "Bug Tracker": "https://github.com/IST-DASLab/gemm-int8/issues",
+            "Documentation": "https://github.com/IST-DASLab/gemm-int8#readme",
+        },
         packages=find_packages(),
         ext_modules=[
             CUDAExtension(
@@ -93,8 +112,21 @@ if __name__ == "__main__":
                 },
             )
         ],
-        cmdclass={"build_ext": BuildExtension},
-        version="1.0.0",
+        cmdclass={"build_ext": CustomBuildExtension},
+        classifiers=[
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
+            "License :: OSI Approved :: MIT License",
+            "Operating System :: POSIX :: Linux",
+            "Topic :: Scientific/Engineering :: Artificial Intelligence",
+            "Intended Audience :: Science/Research",
+            "Development Status :: 4 - Beta",
+        ],
         python_requires=">=3.9",
-        install_requires=["torch>=2.0.0"],
+        install_requires=[
+            "torch>=2.0.0",
+            "cmake>=3.18.0",
+        ],
+        zip_safe=False,  # Required for C extensions
     )
