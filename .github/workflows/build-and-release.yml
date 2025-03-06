@@ -20,6 +20,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout submodules
+        run: |
+          git submodule update --init --recursive
+
       - name: Install build dependencies
         run: |
           apt-get update && apt-get install -y --no-install-recommends \
