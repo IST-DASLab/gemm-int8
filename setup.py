@@ -88,11 +88,11 @@ setup(
         CUDAExtension(
             name="gemm_int8.gemm_int8_CUDA",
             sources=[
-                "gemm_int8/kernels/bindings.cpp",
-                "gemm_int8/kernels/gemm.cu",
+                "csrc/kernels/bindings.cpp",
+                "csrc/kernels/gemm.cu",
             ],
             include_dirs=[
-                os.path.join(setup_dir, "gemm_int8/kernels/include"),
+                os.path.join(setup_dir, "csrc/kernels/include"),
                 os.path.join(setup_dir, "cutlass/include"),
                 os.path.join(setup_dir, "cutlass/tools/util/include"),
             ],
