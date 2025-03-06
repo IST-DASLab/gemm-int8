@@ -14,32 +14,28 @@ concurrency:
 jobs:
   build-with-cuda:
     runs-on: ubuntu-latest
+    container:
+      image: pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          cache: pip
-
-      - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.21
-        id: cuda-toolkit
-        with:
-          cuda: "12.6.0" # Latest CUDA version, adjust as needed
+      - name: Install build dependencies
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends \
+            cmake ninja-build git
+          pip install --no-cache-dir build wheel setuptools
 
       - name: Verify CUDA installation
         run: |
-          echo "Installed CUDA version: ${{steps.cuda-toolkit.outputs.cuda}}"
-          echo "CUDA install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
           nvcc -V
+          python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')"
+          echo "CUDA_PATH=${CUDA_HOME}"
 
       - name: Build wheel
         run: bash .github/scripts/real-build.sh
         env:
-          CUDA_PATH: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}
+          CUDA_PATH: ${CUDA_HOME}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -73,4 +69,4 @@ jobs:
           tag_name: continuous-release
           make_latest: true
           draft: false
-          target_commitish: ${{ github.sha }} 
+          target_commitish: ${{ github.sha }}
