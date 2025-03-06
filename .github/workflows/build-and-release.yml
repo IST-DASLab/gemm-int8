@@ -43,7 +43,6 @@ jobs:
           echo "CUDA_HOME: ${CUDA_HOME}"
           ls -la ${CUDA_HOME}/bin
           echo "PATH: $PATH"
-          python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')"
 
       - name: Build wheel
         run: bash .github/scripts/real-build.sh

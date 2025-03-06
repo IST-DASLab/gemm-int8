@@ -70,7 +70,6 @@ class CustomBuildExtension(BuildExtension):
     """Custom build extension that verifies CUDA compatibility before building."""
 
     def run(self):
-        assert torch.cuda.is_available(), "CUDA is not available!"
         print(f"CUDA version: {torch.version.cuda}")
         cuda_version = tuple(map(int, torch.version.cuda.split(".")))
         assert cuda_version >= min_cuda_version, (
