@@ -21,7 +21,7 @@ jobs:
         run: |
           apt-get update && apt-get install -y --no-install-recommends \
             cmake ninja-build git
-          pip install --no-cache-dir build wheel setuptools
+          pip install --no-cache-dir build wheel setuptools ninja
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,9 +46,9 @@ jobs:
           ls -la ${CUDA_HOME}/bin
           echo "PATH: $PATH"
           pwd
-          ls .
-          ls cutlass
-          ls gemm_int8
+          ls . -alh
+          ls cutlass -alh
+          ls gemm_int8 -alh
 
       - name: Build wheel
         run: bash .github/scripts/real-build.sh
