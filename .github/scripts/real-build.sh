@@ -1,4 +1,4 @@
 # abort if error
 set -e
-pip install -r requirements-build.txt
-python setup.py bdist_wheel
+pip3 install -r requirements-build.txt
+python3 setup.py bdist_wheel
