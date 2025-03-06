@@ -29,11 +29,17 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: "12.8.0" # Latest CUDA version, adjust as needed
-          method: "network"
-          sub-packages: '["nvcc","cudart","cusparse","cublas","thrust","nvrtc_dev","cublas_dev","cusparse_dev"]'
+
+      - name: Verify CUDA installation
+        run: |
+          echo "Installed CUDA version: ${{steps.cuda-toolkit.outputs.cuda}}"
+          echo "CUDA install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+          nvcc -V
 
       - name: Build wheel
         run: bash .github/scripts/real-build.sh
+        env:
+          CUDA_PATH: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
