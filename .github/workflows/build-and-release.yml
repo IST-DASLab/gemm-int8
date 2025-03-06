@@ -17,18 +17,16 @@ jobs:
     container:
       image: pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Checkout submodules
-        run: |
-          git submodule update --init --recursive
-
       - name: Install build dependencies
         run: |
           apt-get update && apt-get install -y --no-install-recommends \
             cmake ninja-build git
           pip install --no-cache-dir build wheel setuptools
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set CUDA_HOME
         run: |
