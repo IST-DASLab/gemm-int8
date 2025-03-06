@@ -1,0 +1,3 @@
+-r requirements.txt
+cmake>=3.18.0
+ninja

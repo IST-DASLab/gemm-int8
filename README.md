@@ -50,8 +50,8 @@ If you're installing from source, you'll need additional build dependencies:
 git clone https://github.com/IST-DASLab/gemm-int8.git
 cd gemm-int8
 
-# Make sure cmake is installed in your environment
-# pip install cmake
+# Make sure cmake and ninja are installed in your environment
+pip install -r requirements-build.txt
 
 # Install the package
 pip install -e .  # For development installation

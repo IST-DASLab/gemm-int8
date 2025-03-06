@@ -11,9 +11,13 @@ import torch
 setup_dir = os.path.dirname(os.path.realpath(__file__))
 HERE = pathlib.Path(__file__).absolute().parent
 
+min_cuda_version = (11, 8)
+
+
 # Read README for the long description
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
+
 
 def remove_unwanted_pytorch_nvcc_flags():
     REMOVE_NVCC_FLAGS = [
@@ -32,10 +36,14 @@ def remove_unwanted_pytorch_nvcc_flags():
 def get_cuda_arch_flags():
     return [
         # '-gencode', 'arch=compute_75,code=sm_75',  # Turing
-        "-gencode", "arch=compute_80,code=sm_80",  # Ampere
-        "-gencode", "arch=compute_86,code=sm_86",  # Ampere
-        "-gencode", "arch=compute_89,code=sm_89",  # Ada
-        "-gencode", "arch=compute_90,code=sm_90",  # Hopper
+        "-gencode",
+        "arch=compute_80,code=sm_80",  # Ampere
+        "-gencode",
+        "arch=compute_86,code=sm_86",  # Ampere
+        "-gencode",
+        "arch=compute_89,code=sm_89",  # Ada
+        "-gencode",
+        "arch=compute_90,code=sm_90",  # Hopper
         "--expt-relaxed-constexpr",
     ]
 
@@ -43,7 +51,11 @@ def get_cuda_arch_flags():
 def third_party_cmake():
     cmake = shutil.which("cmake")
     if cmake is None:
-        raise RuntimeError("Cannot find CMake executable.")
+        raise RuntimeError("Cannot find CMake executable. Please install CMake (pip install cmake).")
+    
+    ninja = shutil.which("ninja")
+    if ninja is None:
+        raise RuntimeError("Cannot find Ninja executable. Please install Ninja (pip install ninja).")
 
     build_dir = HERE / "build"
     build_dir.mkdir(exist_ok=True)
@@ -55,7 +67,9 @@ def third_party_cmake():
             str(build_dir),
             "-S",
             str(HERE),
-            # "-DCMAKE_BUILD_PARALLEL_LEVEL=32",  # Use 8 CPUs for parallel build
+            "-G",
+            "Ninja",
+            # "-DCMAKE_BUILD_PARALLEL_LEVEL=8",  # Use 8 CPUs for parallel build
         ]
     )
     if retcode != 0:
@@ -65,19 +79,27 @@ def third_party_cmake():
 
 class CustomBuildExtension(BuildExtension):
     """Custom build extension that verifies CUDA compatibility before building."""
-    
+
     def run(self):
         assert torch.cuda.is_available(), "CUDA is not available!"
-        device = torch.cuda.current_device()
-        print(f"Current device: {torch.cuda.get_device_name(device)}")
-        print(f"Current CUDA capability: {torch.cuda.get_device_capability(device)}")
-        assert torch.cuda.get_device_capability(device)[0] >= 8, (
-            f"CUDA capability must be >= 8.0, yours is {torch.cuda.get_device_capability(device)}"
+        print(f"CUDA version: {torch.version.cuda}")
+        cuda_version = tuple(map(int, torch.version.cuda.split(".")))
+        assert cuda_version >= min_cuda_version, (
+            f"CUDA version must be >= {min_cuda_version}, yours is {torch.version.cuda}"
         )
         third_party_cmake()
         remove_unwanted_pytorch_nvcc_flags()
         super().run()
 
+
+install_requires = [
+    "torch>=2.0.0",
+]
+
+build_requires = [
+    "cmake>=3.18.0",
+    "ninja",
+]
 
 if __name__ == "__main__":
     setup(
@@ -124,9 +146,9 @@ if __name__ == "__main__":
             "Development Status :: 4 - Beta",
         ],
         python_requires=">=3.9",
-        install_requires=[
-            "torch>=2.0.0",
-            "cmake>=3.18.0",
-        ],
+        install_requires=install_requires,
+        extras_require={
+            "build": build_requires,
+        },
         zip_safe=False,  # Required for C extensions
     )
