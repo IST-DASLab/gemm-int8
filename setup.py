@@ -45,10 +45,12 @@ def get_cuda_arch_flags():
 
 def third_party_cmake():
     cmake = shutil.which("cmake")
+    print(f"cmake: {cmake}")
     if cmake is None:
         raise RuntimeError("Cannot find CMake executable. Please install CMake (pip install cmake).")
     
     ninja = shutil.which("ninja")
+    print(f"ninja: {ninja}")
     if ninja is None:
         raise RuntimeError("Cannot find Ninja executable. Please install Ninja (pip install ninja).")
 

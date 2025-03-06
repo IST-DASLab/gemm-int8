@@ -21,7 +21,6 @@ jobs:
         run: |
           apt-get update && apt-get install -y --no-install-recommends \
             cmake ninja-build git
-          pip install --no-cache-dir build wheel setuptools ninja
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,7 +35,6 @@ jobs:
           export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
           echo "CUDA_HOME=${CUDA_HOME}" >> $GITHUB_ENV
           echo "Found CUDA installation at: ${CUDA_HOME}"
-          # Also add to PATH if needed
           echo "${CUDA_HOME}/bin" >> $GITHUB_PATH
 
       - name: Verify CUDA installation
@@ -65,7 +63,7 @@ jobs:
   publish-release:
     needs: build-with-cuda
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Only run on main branch
+    # if: github.ref == 'refs/heads/main' # Only run on main branch
     permissions:
       contents: write
     steps:
