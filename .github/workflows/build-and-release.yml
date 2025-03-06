@@ -26,11 +26,24 @@ jobs:
             cmake ninja-build git
           pip install --no-cache-dir build wheel setuptools
 
+      - name: Set CUDA_HOME
+        run: |
+          # Find nvcc location
+          NVCC_PATH=$(which nvcc)
+          # Extract CUDA installation directory (remove /bin/nvcc from path)
+          export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
+          echo "CUDA_HOME=${CUDA_HOME}" >> $GITHUB_ENV
+          echo "Found CUDA installation at: ${CUDA_HOME}"
+          # Also add to PATH if needed
+          echo "${CUDA_HOME}/bin" >> $GITHUB_PATH
+
       - name: Verify CUDA installation
         run: |
           nvcc -V
+          echo "CUDA_HOME: ${CUDA_HOME}"
+          ls -la ${CUDA_HOME}/bin
+          echo "PATH: $PATH"
           python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')"
-          echo "CUDA_PATH=${CUDA_HOME}"
 
       - name: Build wheel
         run: bash .github/scripts/real-build.sh
