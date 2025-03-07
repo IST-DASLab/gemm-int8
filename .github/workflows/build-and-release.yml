@@ -67,7 +67,6 @@ jobs:
           path: dist/*.whl
           retention-days: 7
 
-  # Rest of the workflow remains unchanged
   publish-release:
     needs: build-with-cuda
     runs-on: ubuntu-latest
@@ -80,6 +79,16 @@ jobs:
           name: wheel
           path: wheels/
 
+      - name: Checkout code to get version
+        uses: actions/checkout@v4
+        
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep version pyproject.toml | head -n1 | awk -F'"' '{print $2}')
+          echo "Package version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: List wheels
         run: ls -la wheels/
 
@@ -87,9 +96,9 @@ jobs:
         uses: softprops/action-gh-release@v2.0.8
         with:
           files: wheels/*.whl
-          prerelease: true
-          name: Latest Build from main
-          tag_name: continuous-release
+          prerelease: false
+          name: "v${{ steps.extract_version.outputs.version }}"
+          tag_name: "v${{ steps.extract_version.outputs.version }}"
           make_latest: true
           draft: false
           target_commitish: ${{ github.sha }}
