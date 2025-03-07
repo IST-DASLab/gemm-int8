@@ -1,8 +1,17 @@
 import torch
 import os
+import glob
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
-torch.ops.load_library(os.path.join(package_dir, "gemm_int8_CUDA.cpython-310-x86_64-linux-gnu.so"))
+
+# Find the compiled library with a dynamic pattern
+lib_pattern = os.path.join(package_dir, "gemm_int8_CUDA*.so")
+lib_files = glob.glob(lib_pattern)
+if not lib_files:
+    raise ImportError(f"Could not find compiled CUDA extension in {package_dir}")
+    
+for lib_file in lib_files:
+    torch.ops.load_library(lib_file)
 
 
 @torch.library.register_fake("gemm_int8_CUDA::int8_matmul")
@@ -20,12 +29,11 @@ def _(x: torch.Tensor, y: torch.Tensor, alpha: float = 1.0):
 def matmul(x: torch.Tensor, y: torch.Tensor, alpha: float = 1.0):
     """
     Matrix-Matrix Multiplication for INT8 data type in the form of (x @ y.t())*alpha.
-    The output is BF16 data t   pe. todo: support arbitrary output dtype!
+    The output is BF16 data type. todo: support arbitrary output dtype!
     Argumengs:
         x: torch.Tensor, shape (M, K)
         y: torch.Tensor, shape (K, N)
         alpha: float, which is multiplied by the output (default=1.0)
-        fastAcc: bool, (default=True)
     """
     return torch.ops.gemm_int8_CUDA.int8_matmul(x, y, alpha)
 

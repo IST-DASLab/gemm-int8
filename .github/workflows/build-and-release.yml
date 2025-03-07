@@ -48,8 +48,15 @@ jobs:
           ls cutlass -alh
           ls gemm_int8 -alh
 
+      - name: Build C++/CUDA (CMake)
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        env:
+          CUDA_PATH: ${CUDA_HOME}
+
       - name: Build wheel
-        run: bash .github/scripts/real-build.sh
+        run: ./build.sh --wheel
         env:
           CUDA_PATH: ${CUDA_HOME}
 
@@ -60,10 +67,10 @@ jobs:
           path: dist/*.whl
           retention-days: 7
 
+  # Rest of the workflow remains unchanged
   publish-release:
     needs: build-with-cuda
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/main' # Only run on main branch
     permissions:
       contents: write
     steps:
