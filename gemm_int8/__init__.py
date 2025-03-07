@@ -4,7 +4,6 @@ import glob
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Find the compiled library with a dynamic pattern
 lib_pattern = os.path.join(package_dir, "gemm_int8_CUDA*.so")
 lib_files = glob.glob(lib_pattern)
 if not lib_files:
