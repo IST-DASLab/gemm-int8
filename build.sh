@@ -59,23 +59,11 @@ if [ -z "$LIBTORCH_PATH" ]; then
 fi
 echo "Found libtorch at: $LIBTORCH_PATH"
 
-# Set appropriate compute capabilities based on CUDA version
-# Default to common architectures
-build_capability="80;86;89;90"
 
-# Adjust for specific CUDA versions
-if [[ "${cuda_version}" == 11.* ]]; then
-    # For CUDA 11.x, include Ampere but exclude Hopper
-    build_capability="70;75;80;86"
-elif [[ "${cuda_version}" == 12.* ]]; then
-    if [[ "${cuda_version}" == 12.[0-6].* ]]; then
-        # CUDA 12.0-12.6: Include Ampere and Hopper
-        build_capability="70;75;80;86;89;90"
-    else
-        # CUDA 12.7+: Include Blackwell
-        build_capability="70;75;80;86;89;90;100"
-    fi
-fi
+build_capability="70;75;80;86;89;90;90a;100;120"
+[[ "${cuda_version}" == 11.7.* ]] && build_capability="70;75;80;86"
+[[ "${cuda_version}" == 12.6.* ]] && build_capability="70;75;80;86;89;90;90a"
+[[ "${cuda_version}" == 12.8.* ]] && build_capability="70;75;80;86;89;90;90a;100;120"
 
 # Create build directory
 mkdir -p build

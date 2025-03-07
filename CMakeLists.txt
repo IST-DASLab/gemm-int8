@@ -71,7 +71,7 @@ if(BUILD_CUDA)
 
     # Default architectures if not provided
     if(NOT DEFINED COMPUTE_CAPABILITY)
-        set(COMPUTE_CAPABILITY "70;75;80;86;89;90" CACHE STRING "CUDA Compute Capabilities")
+        set(COMPUTE_CAPABILITY "70;75;80;86;89;90;90a" CACHE STRING "CUDA Compute Capabilities")
     endif()
     
     message(STATUS "CUDA Capabilities Selected: ${COMPUTE_CAPABILITY}")
