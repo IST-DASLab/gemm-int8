@@ -10,7 +10,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gemm_int8"
+name = "gemm-int8"
 version = "1.0.0"
 description = "High-performance INT8 matrix multiplication CUDA extension for PyTorch"
 readme = "README.md"

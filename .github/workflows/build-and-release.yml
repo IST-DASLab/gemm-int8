@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [main, ci]
+    branches: [main, ci, pypi]
   pull_request:
     branches: [main]
   workflow_dispatch: {} # Allow manual trigger
@@ -67,7 +67,7 @@ jobs:
           path: dist/*.whl
           retention-days: 7
 
-  publish-release:
+  publish-to-github:
     needs: build-with-cuda
     runs-on: ubuntu-latest
     permissions:
@@ -92,7 +92,7 @@ jobs:
       - name: List wheels
         run: ls -la wheels/
 
-      - name: Create/Update Release
+      - name: Create/Update GitHub Release
         uses: softprops/action-gh-release@v2.0.8
         with:
           files: wheels/*.whl
@@ -102,3 +102,26 @@ jobs:
           make_latest: true
           draft: false
           target_commitish: ${{ github.sha }}
+
+  publish-to-pypi:
+    needs: publish-to-github
+    runs-on: ubuntu-latest
+    # Only run this job when pushing to main branch, not on PRs
+    if: github.event_name == 'push' # && github.ref == 'refs/heads/main'
+    steps:
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: wheels/
+
+      - name: List wheels
+        run: ls -la wheels/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: wheels/
+          skip-existing: false

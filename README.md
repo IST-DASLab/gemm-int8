@@ -13,7 +13,7 @@ A PyTorch CUDA extension providing high-performance INT8 matrix multiplication o
 
 - INT8 matrix multiplication with PyTorch integration, providing up to 4x speedup on RTX 4090 GPUs
 - Compatible with PyTorch's torch.compile (autograd not supported)
-- Optimized CUDA kernels for compute capabilities 89-100 (Volta, Ada Lovelace, Hopper)
+- Optimized CUDA kernels for compute capabilities 89-100 (Ada Lovelace, Hopper)
 - Tuned kernel configurations for common matrix dimensions in transformer models
 - Direct integration with existing PyTorch workflows
 
@@ -93,7 +93,7 @@ cd gemm-int8
 echo $CUDA_HOME  # Should point to your CUDA installation directory
 # If not set, you may need to run: export CUDA_HOME=/usr/local/cuda
 
-# Also make sure you hace cmake and ninja installed in your environment.
+# Also make sure you have cmake and ninja installed in your environment.
 pip install cmake ninja
 
 # Build and install
