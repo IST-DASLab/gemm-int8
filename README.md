@@ -13,7 +13,7 @@ A PyTorch CUDA extension providing high-performance INT8 matrix multiplication o
 
 - INT8 matrix multiplication with PyTorch integration, providing up to 4x speedup on RTX 4090 GPUs
 - Compatible with PyTorch's torch.compile (autograd not supported)
-- Optimized CUDA kernels for compute capabilities 89-100 (Volta, Ada Lovelace, Hopper)
+- Optimized CUDA kernels for compute capabilities 89-100 (Ada Lovelace, Hopper)
 - Tuned kernel configurations for common matrix dimensions in transformer models
 - Direct integration with existing PyTorch workflows
 
