@@ -7,82 +7,33 @@
 <!-- [![GitHub stars](https://img.shields.io/github/stars/IST-DASLab/gemm-int8.svg)](https://github.com/IST-DASLab/gemm-int8/stargazers) -->
 <!-- [![GitHub issues](https://img.shields.io/github/issues/IST-DASLab/gemm-int8.svg)](https://github.com/IST-DASLab/gemm-int8/issues) -->
 
-A high-performance CUDA extension for PyTorch that provides optimized INT8 matrix multiplication operations. This library offers significant speedups over standard BF16 matrix multiplication in PyTorch, making it ideal for accelerating large matrix operations in deep learning applications.
+A PyTorch CUDA extension providing high-performance INT8 matrix multiplication operations utilizing CUTLASS iterators. Specifically optimized for modern NVIDIA GPUs including Ada Lovelace and Hopper architectures, this library offers measurable performance improvements over standard BF16 matrix multiplication in deep learning applications. (It was originally used in [HALO: Hadamard-Assisted Low-Precision Optimization and Training method for finetuning LLMs](https://github.com/IST-DASLab/HALO))
 
 ## Features
 
-- Fast INT8 matrix multiplication with PyTorch integration, up to 4x on RTX4090 
-- Compatible with PyTorch's torch.compile (autograd is not supported on this operator)
-- Supports CUDA-enabled GPUs (requires CUDA 11.8+ and SM>80)
-- Provides significant speedups over standard BF16 matrix multiplication using int8 specific kernels
-- Simple API that integrates seamlessly with existing PyTorch code
+- INT8 matrix multiplication with PyTorch integration, providing up to 4x speedup on RTX 4090 GPUs
+- Compatible with PyTorch's torch.compile (autograd not supported)
+- Optimized CUDA kernels for compute capabilities 89-100 (Volta, Ada Lovelace, Hopper)
+- Tuned kernel configurations for common matrix dimensions in transformer models
+- Direct integration with existing PyTorch workflows
 
-## Requirements
-
-- Python 3.9+
-- PyTorch 2.0.0+
-- CUDA 11.8+ (supported versions: 11.8, 12.0, 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.8)
-- NVIDIA GPU with Compute Capability > 80
-- CMake 3.18.0+
-- Linux with x86_64 architecture
-
-## Installation
-
-### From PyPI (Coming Soon)
+## Quick Start
 
 ```bash
-pip install gemm-int8
+# Install from GitHub releases
+pip install https://github.com/IST-DASLab/gemm-int8/releases/download/latest/gemm_int8-1.0.0-py3-none-manylinux_2_24_x86_64.whl
 ```
-
-### From GitHub Release
-
-```bash
-# Install the latest release wheel
-pip install https://github.com/IST-DASLab/gemm-int8/releases/download/continuous-release_main/gemm_int8-1.0.0-py3-none-linux_x86_64.whl
-```
-
-### From Source
-
-If you're installing from source, you'll need additional build dependencies:
-
-```bash
-# Clone the repository
-git clone https://github.com/IST-DASLab/gemm-int8.git
-cd gemm-int8
-
-# Make sure cmake and ninja are installed in your environment
-pip install -r requirements-build.txt
-
-# Install the package
-pip install -e .  # For development installation
-# OR
-pip install .     # For regular installation
-```
-
-
-## Usage
-
-The library provides a simple API for INT8 matrix multiplication:
 
 ```python
 import torch
 import gemm_int8
 
-# Create INT8 tensors
-a = torch.randn(1024, 4096, device='cuda').clamp(-128, 127).to(torch.int8)
-b = torch.randn(4096, 4096, device='cuda').clamp(-128, 127).to(torch.int8)
+# Create input tensors
+a = torch.randint(-128, 127, (1024, 4096), device='cuda', dtype=torch.int8)
+b = torch.randint(-128, 127, (4096, 4096), device='cuda', dtype=torch.int8)
 
-# Perform INT8 matrix multiplication
-result = gemm_int8.matmul(a, b, alpha=1.0)
-
-# The result is in BF16 format
-print(result.dtype)  # torch.bfloat16
-```
-
-### API Reference
-
-```python
-gemm_int8.matmul(x, y, alpha=1.0)
+# Perform INT8 matrix multiplication (compute a @ b.t())
+result = gemm_int8.matmul(a, b, alpha=1.0)  # Returns bfloat16 tensor of (a @ b.t()) * alpha
 ```
 
 Performs matrix multiplication in the form of `(x @ y.t()) * alpha`.
@@ -94,6 +45,65 @@ Performs matrix multiplication in the form of `(x @ y.t()) * alpha`.
 
 **Returns:**
 - torch.Tensor: Result matrix of shape (M, N) with dtype torch.bfloat16
+
+## Requirements
+
+- Python 3.9+
+- PyTorch 2.0.0+
+- CUDA 11.8+
+- NVIDIA GPU with Compute Capability 70 or higher
+- Linux with x86_64 architecture (primary platform)
+
+## Installation
+
+### Option 1: From PyPI (Coming Soon)
+
+```bash
+pip install gemm-int8
+```
+
+### Option 2: From GitHub Release
+
+Download pre-built wheels directly from the GitHub releases page:
+
+```bash
+pip install https://github.com/IST-DASLab/gemm-int8/releases/download/v$(VERSION)/gemm_int8-$(VERSION)-py3-none-$(PLATFORM_TAG).whl
+```
+
+Where:
+- `$(VERSION)` is the package version (e.g., "1.0.0")
+- `$(PLATFORM_TAG)` is your platform tag (e.g., "manylinux_2_24_x86_64")
+
+Or to install the latest build from the main branch:
+
+```bash
+pip install https://github.com/IST-DASLab/gemm-int8/releases/download/latest/gemm_int8-$(VERSION)-py3-none-$(PLATFORM_TAG).whl
+```
+
+### Option 3: Build From Source
+
+Building from source requires additional development tools:
+
+```bash
+# Clone the repository with submodules
+git clone --recursive https://github.com/IST-DASLab/gemm-int8.git
+cd gemm-int8
+
+# Make sure CUDA toolkit is properly installed and CUDA_HOME is set
+echo $CUDA_HOME  # Should point to your CUDA installation directory
+# If not set, you may need to run: export CUDA_HOME=/usr/local/cuda
+
+# Also make sure you hace cmake and ninja installed in your environment.
+pip install cmake ninja
+
+# Build and install
+./build.sh
+pip install .
+
+# Alternatively, for development installation
+pip install -e .
+```
+
 
 ### Integration with torch.compile
 
@@ -133,10 +143,6 @@ Typical speedups range from 2x to 4x depending on the matrix dimensions and hard
 - For best performance, ensure your tensors are contiguous in memory
 - The library is optimized for large matrix sizes commonly found in transformer models
 - Performance benefits are most significant for matrix dimensions commonly used in LLM inference
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
