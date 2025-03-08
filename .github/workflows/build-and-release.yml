@@ -1,0 +1,104 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main, ci]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {} # Allow manual trigger
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-with-cuda:
+    runs-on: ubuntu-latest
+    container:
+      image: pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends \
+            cmake ninja-build git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set CUDA_HOME
+        run: |
+          # Find nvcc location
+          NVCC_PATH=$(which nvcc)
+          # Extract CUDA installation directory (remove /bin/nvcc from path)
+          export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
+          echo "CUDA_HOME=${CUDA_HOME}" >> $GITHUB_ENV
+          echo "Found CUDA installation at: ${CUDA_HOME}"
+          echo "${CUDA_HOME}/bin" >> $GITHUB_PATH
+
+      - name: Verify CUDA installation
+        run: |
+          nvcc -V
+          echo "CUDA_HOME: ${CUDA_HOME}"
+          ls -la ${CUDA_HOME}/bin
+          echo "PATH: $PATH"
+          pwd
+          ls . -alh
+          ls cutlass -alh
+          ls gemm_int8 -alh
+
+      - name: Build C++/CUDA (CMake)
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        env:
+          CUDA_PATH: ${CUDA_HOME}
+
+      - name: Build wheel
+        run: ./build.sh --wheel
+        env:
+          CUDA_PATH: ${CUDA_HOME}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl
+          retention-days: 7
+
+  publish-release:
+    needs: build-with-cuda
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code to get version
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep version pyproject.toml | head -n1 | awk -F'"' '{print $2}')
+          echo "Package version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: wheels/
+
+      - name: List wheels
+        run: ls -la wheels/
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2.0.8
+        with:
+          files: wheels/*.whl
+          prerelease: false
+          name: "v${{ steps.extract_version.outputs.version }}"
+          tag_name: "v${{ steps.extract_version.outputs.version }}"
+          make_latest: true
+          draft: false
+          target_commitish: ${{ github.sha }}

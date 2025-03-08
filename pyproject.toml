@@ -1,3 +1,47 @@
 [build-system]
-requires = ["setuptools", "wheel", "torch", "numpy", "cmake"]  # Specify build dependencies here
+requires = [
+    "setuptools>=45", 
+    "wheel", 
+    "torch>=2.0.0", 
+    "cmake>=3.18.0", 
+    "ninja",
+    "numpy"
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "gemm_int8"
+version = "1.0.0"
+description = "High-performance INT8 matrix multiplication CUDA extension for PyTorch"
+readme = "README.md"
+authors = [
+    {name = "Rush Tabesh", email = "soroushtabesh@gmail.com"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Intended Audience :: Science/Research",
+    "Development Status :: 4 - Beta",
+]
+dependencies = [
+    "torch>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/IST-DASLab/gemm-int8"
+"Bug Tracker" = "https://github.com/IST-DASLab/gemm-int8/issues"
+Documentation = "https://github.com/IST-DASLab/gemm-int8#readme"
+
+[project.optional-dependencies]
+build = [
+    "cmake>=3.18.0",
+    "ninja",
+]
+
+[tool.setuptools]
+packages = ["gemm_int8"]

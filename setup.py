@@ -1,77 +1,74 @@
 from setuptools import setup
-import torch.utils.cpp_extension as torch_cpp_ext
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 import os
-import pathlib, torch
+import platform
+import pathlib
+import torch
+import sys
+from setuptools.command.bdist_wheel import bdist_wheel
+
 setup_dir = os.path.dirname(os.path.realpath(__file__))
 HERE = pathlib.Path(__file__).absolute().parent
 
-def remove_unwanted_pytorch_nvcc_flags():
-    REMOVE_NVCC_FLAGS = [
-        '-D__CUDA_NO_HALF_OPERATORS__',
-        '-D__CUDA_NO_HALF_CONVERSIONS__',
-        '-D__CUDA_NO_BFLOAT16_CONVERSIONS__',
-        '-D__CUDA_NO_HALF2_OPERATORS__',
-    ]
-    for flag in REMOVE_NVCC_FLAGS:
-        try:
-            torch_cpp_ext.COMMON_NVCC_FLAGS.remove(flag)
-        except ValueError:
-            pass
+min_cuda_version = (11, 8)
 
-def get_cuda_arch_flags():
-    return [
-        # '-gencode', 'arch=compute_75,code=sm_75',  # Turing
-        '-gencode', 'arch=compute_80,code=sm_80',  # Ampere
-        # '-gencode', 'arch=compute_86,code=sm_86',  # Ampere
-        '-gencode', 'arch=compute_89,code=sm_89',  # Ada
-        '--expt-relaxed-constexpr'
-    ]
+def check_cuda_version():
+    """Verify CUDA compatibility before building."""
+    print(f"CUDA version: {torch.version.cuda}")
+    cuda_version = tuple(map(int, torch.version.cuda.split(".")))
+    assert cuda_version >= min_cuda_version, (
+        f"CUDA version must be >= {min_cuda_version}, yours is {torch.version.cuda}"
+    )
+
+def get_platform_tag(architecture=None):
+    """Determine the platform tag for the wheel."""
+    if architecture is None:
+        architecture = platform.machine()
+        
+    system = platform.system()
+
+    if system == "Linux":
+        tag = "manylinux_2_24_x86_64" if architecture == "x86_64" else "manylinux_2_24_aarch64"
+    elif system == "Darwin":
+        tag = "macosx_13_1_x86_64" if architecture == "x86_64" else "macosx_13_1_arm64"
+    elif system == "Windows":
+        tag = "win_amd64" if architecture == "x86_64" else "win_arm64"
+    else:
+        raise ValueError(f"Unsupported system: {system}")
+
+    return tag
+
+class BdistWheelCommand(bdist_wheel):
+    """Custom wheel building command to set platform tags correctly."""
+    def finalize_options(self):
+        bdist_wheel.finalize_options(self)
+        # Mark the wheel as platform-specific (not "any")
+        self.root_is_pure = False
+        
+    def get_tag(self):
+        python_tag = "py3"
+        
+        platform_tag = get_platform_tag()
+        
+        # Force the ABI tag to be 'none' since we're not using Python C API directly
+        # (PyTorch's C++ extensions handle this for us)
+        abi_tag = 'none'
+        
+        return python_tag, abi_tag, platform_tag
+
+if __name__ == "__main__":
+    # Read README for the long description
+    with open("README.md", "r", encoding="utf-8") as fh:
+        long_description = fh.read()
+
+    check_cuda_version()
     
-def third_party_cmake():
-    import subprocess, sys, shutil
-    
-    cmake = shutil.which('cmake')
-    if cmake is None:
-            raise RuntimeError('Cannot find CMake executable.')
+    print(f"Building wheel with platform tag: {get_platform_tag()}")
 
-    retcode = subprocess.call([cmake, HERE])
-    if retcode != 0:
-        sys.stderr.write("Error: CMake configuration failed.\n")
-        sys.exit(1)
-
-if __name__ == '__main__':
-
-    assert torch.cuda.is_available(), "CUDA is not available!"
-    device = torch.cuda.current_device()
-    print(f"Current device: {torch.cuda.get_device_name(device)}")
-    print(f"Current CUDA capability: {torch.cuda.get_device_capability(device)}")
-    assert torch.cuda.get_device_capability(device)[0] >= 8, f"CUDA capability must be >= 8.0, yours is {torch.cuda.get_device_capability(device)}"
-
-    third_party_cmake()
-    remove_unwanted_pytorch_nvcc_flags()
+    # The actual setup call without ext_modules
     setup(
-        name='gemm_int8',
-        ext_modules=[
-            CUDAExtension(
-                name='gemm_int8._CUDA',
-                sources=[
-                    'gemm_int8/kernels/bindings.cpp',
-                    'gemm_int8/kernels/gemm.cu',
-                ],
-                include_dirs=[
-                    os.path.join(setup_dir, 'gemm_int8/kernels/include'),
-                    os.path.join(setup_dir, 'cutlass/include'),
-                    os.path.join(setup_dir, 'cutlass/tools/util/include')
-                ],
-                extra_compile_args={
-                    'cxx': [],
-                    'nvcc': get_cuda_arch_flags(),
-                }
-            )
-        ],
+        # All package configuration is now in pyproject.toml
+        package_data={"gemm_int8": ["*.so"]},  # Include compiled libraries
         cmdclass={
-            'build_ext': BuildExtension
+            'bdist_wheel': BdistWheelCommand,
         },
-        version='0.1.0',
     )
