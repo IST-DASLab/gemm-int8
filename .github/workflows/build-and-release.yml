@@ -73,21 +73,21 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download wheel artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: wheel
-          path: wheels/
-
       - name: Checkout code to get version
         uses: actions/checkout@v4
-        
+
       - name: Extract version
         id: extract_version
         run: |
           VERSION=$(grep version pyproject.toml | head -n1 | awk -F'"' '{print $2}')
           echo "Package version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: wheels/
 
       - name: List wheels
         run: ls -la wheels/
