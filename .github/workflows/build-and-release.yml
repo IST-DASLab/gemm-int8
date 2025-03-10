@@ -15,7 +15,7 @@ jobs:
   build-with-cuda:
     runs-on: ubuntu-latest
     container:
-      image: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+      image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
     steps:
       - name: Install build dependencies
         run: |
