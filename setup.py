@@ -71,4 +71,8 @@ if __name__ == "__main__":
         cmdclass={
             'bdist_wheel': BdistWheelCommand,
         },
+        # Add this line to indicate this is not a pure Python package
+        zip_safe=False,
+        # This is critical - it tells setuptools this is a binary distribution
+        has_ext_modules=lambda: True
     )

@@ -22,8 +22,8 @@ endif()
 message(STATUS "Using Python executable: ${Python3_EXECUTABLE}")
 
 # Find Python package
-find_package(Python3 COMPONENTS Development REQUIRED)
-message(STATUS "Python3_INCLUDE_DIRS: ${Python3_INCLUDE_DIRS}")
+# find_package(Python3 COMPONENTS Development REQUIRED)
+# message(STATUS "Python3_INCLUDE_DIRS: ${Python3_INCLUDE_DIRS}")
 
 # Get Python include directories
 execute_process(
@@ -112,7 +112,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cutlass/tools/util/include)
 # Setup include directories
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/csrc/kernels/include)
-include_directories(${Python3_INCLUDE_DIRS})
+# include_directories(${Python3_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIR})
 
 # Find PyTorch - IMPORTANT: Do this after setting TORCH_CUDA_ARCH_LIST
@@ -139,14 +139,12 @@ add_library(gemm_int8 SHARED ${SRC_FILES})
 if(BUILD_CUDA)
     target_link_libraries(gemm_int8 PRIVATE 
         "${TORCH_LIBRARIES}" 
-        Python3::Python 
         CUDA::cudart 
         CUDA::cublas
     )
 else()
     target_link_libraries(gemm_int8 PRIVATE 
-        "${TORCH_LIBRARIES}" 
-        Python3::Python
+        "${TORCH_LIBRARIES}"
     )
 endif()
 
