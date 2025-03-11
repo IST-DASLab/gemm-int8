@@ -31,9 +31,7 @@ jobs:
 
       - name: Set CUDA_HOME
         run: |
-          # Find nvcc location
           NVCC_PATH=$(which nvcc)
-          # Extract CUDA installation directory (remove /bin/nvcc from path)
           export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
           echo "CUDA_HOME=${CUDA_HOME}" >> $GITHUB_ENV
           echo "Found CUDA installation at: ${CUDA_HOME}"

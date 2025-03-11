@@ -41,7 +41,6 @@ class BdistWheelCommand(bdist_wheel):
     """Custom wheel building command to set platform tags correctly."""
     def finalize_options(self):
         bdist_wheel.finalize_options(self)
-        # Mark the wheel as platform-specific (not "any")
         self.root_is_pure = False
         
     def get_tag(self):
@@ -56,7 +55,6 @@ class BdistWheelCommand(bdist_wheel):
         return python_tag, abi_tag, platform_tag
 
 if __name__ == "__main__":
-    # Read README for the long description
     with open("README.md", "r", encoding="utf-8") as fh:
         long_description = fh.read()
 
@@ -64,15 +62,12 @@ if __name__ == "__main__":
     
     print(f"Building wheel with platform tag: {get_platform_tag()}")
 
-    # The actual setup call without ext_modules
     setup(
         # All package configuration is now in pyproject.toml
-        package_data={"gemm_int8": ["*.so"]},  # Include compiled libraries
+        package_data={"gemm_int8": ["*.so"]},
         cmdclass={
             'bdist_wheel': BdistWheelCommand,
         },
-        # Add this line to indicate this is not a pure Python package
         zip_safe=False,
-        # This is critical - it tells setuptools this is a binary distribution
         has_ext_modules=lambda: True
     )

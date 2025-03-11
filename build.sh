@@ -60,11 +60,12 @@ fi
 echo "Found libtorch at: $LIBTORCH_PATH"
 
 
-build_capability="70;75;80;86;89;90;90a;100;120"
-[[ "${cuda_version}" == 11.7.* ]] && build_capability="70;75;80;86"
-[[ "${cuda_version}" == 12.4.* ]] && build_capability="70;75;80;86;89"
-[[ "${cuda_version}" == 12.6.* ]] && build_capability="70;75;80;86;89;90;90a"
-[[ "${cuda_version}" == 12.8.* ]] && build_capability="70;75;80;86;89;90;90a;100;120"
+# By default, target Maxwell through Hopper.
+build_capability="50;52;60;61;70;75;80;86;89;90"
+# CUDA 11.7: Remove sm89 and sm90
+[[ "${cuda_version}" == 11.7.* ]] && build_capability="50;52;60;61;70;75;80;86"
+# CUDA 12.8: Add sm100 and sm120; remove sm50 through sm61
+[[ "${cuda_version}" == 12.8.* ]] && build_capability="70;75;80;86;89;90;100;120"
 
 # Create build directory
 mkdir -p build
