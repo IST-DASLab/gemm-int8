@@ -21,7 +21,7 @@ jobs:
         run: |
           apt-get update && apt-get install -y --no-install-recommends \
             cmake ninja-build git
-          pip install setuptools wheel
+          pip install setuptools wheel -U
         env:
           DEBIAN_FRONTEND: noninteractive
 
